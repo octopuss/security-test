@@ -1,0 +1,49 @@
+<beans:beans xmlns="http://www.springframework.org/schema/security"
+             xmlns:beans="http://www.springframework.org/schema/beans"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+	http://www.springframework.org/schema/security
+	http://www.springframework.org/schema/security/spring-security-4.0.xsd">
+
+
+
+    <http pattern="/rest/**" authentication-manager-ref="restManager" create-session="stateless" realm="rest">
+        <intercept-url pattern="/rest/**" access="hasRole('ROLE_SYSTEM')" />
+        <access-denied-handler ref="accessDeniedHandler"/>
+        <http-basic/>
+    </http>
+    <beans:bean class="sk.octopuss.test.RestAuthentificationAccessDeniedHandler" name="accessDeniedHandler" />
+    <http use-expressions="true" authentication-manager-ref="dataManager">
+        <intercept-url pattern="/data/**" access="hasRole('ROLE_USER')" />
+        <form-login
+                login-page="/login"
+                default-target-url="/data"
+                authentication-failure-url="/login?error"
+                login-processing-url="/j_spring_security_check"
+                username-parameter="username"
+                password-parameter="password" />
+        <logout logout-success-url="/login?logout" logout-url="/logout"/>
+        <access-denied-handler error-page="/login"/>
+        <session-management>
+            <concurrency-control max-sessions="2" />
+        </session-management>
+    </http>
+
+
+    <authentication-manager id="restManager">
+        <authentication-provider>
+            <user-service>
+                <user name="system" password="ivan" authorities="ROLE_SYSTEM" />
+            </user-service>
+        </authentication-provider>
+    </authentication-manager>
+    <authentication-manager id="dataManager">
+        <authentication-provider>
+            <user-service>
+                <user name="ivan" password="ivan" authorities="ROLE_USER" />
+            </user-service>
+        </authentication-provider>
+    </authentication-manager>
+
+</beans:beans>
