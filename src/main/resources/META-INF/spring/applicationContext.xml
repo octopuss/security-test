@@ -19,6 +19,8 @@
                                 type="annotation" />
     </context:component-scan>
 
+    <context:property-placeholder location="application.properties"/>
+
 
 
 </beans>
