@@ -25,10 +25,22 @@
                 password-parameter="password" />
         <logout logout-success-url="/login?logout" logout-url="/logout"/>
         <access-denied-handler error-page="/login"/>
+        <custom-filter ref="tokenPreAuthFilter"  position="PRE_AUTH_FILTER"/>
+
         <session-management>
             <concurrency-control max-sessions="2" />
         </session-management>
     </http>
+
+    <beans:bean id="preAuthenticationProvider"
+    class="org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationProvider">
+    <beans:property name="preAuthenticatedUserDetailsService" ref="userDetailService"/>
+</beans:bean>
+
+    <beans:bean class="sk.octopuss.test.TokenPreAuthFilter" name="tokenPreAuthFilter">
+        <beans:property name="authenticationManager" ref="preAuthManager"/>
+    </beans:bean>
+    <beans:bean class="sk.octopuss.test.UserDetailServiceImpl" name="userDetailService" />
 
 
     <authentication-manager id="restManager">
@@ -44,6 +56,9 @@
                 <user name="ivan" password="ivan" authorities="ROLE_USER" />
             </user-service>
         </authentication-provider>
+    </authentication-manager>
+    <authentication-manager id="preAuthManager">
+        <authentication-provider ref="preAuthenticationProvider"/>
     </authentication-manager>
 
 </beans:beans>

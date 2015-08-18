@@ -1,0 +1,19 @@
+<ehcache xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="ehcache.xsd"
+        updateCheck="true"
+        monitoring="autodetect"
+        dynamicConfig="true"
+        maxBytesLocalHeap="150M"
+        >
+    <diskStore path="C:\\temp"/>
+
+    <cache name="Image"
+           maxBytesLocalHeap="100"
+           eternal="false"
+           timeToIdleSeconds="300"
+           timeToLiveSeconds="600"
+           diskExpiryThreadIntervalSeconds="1"
+           memoryStoreEvictionPolicy="LFU">
+        <persistence strategy="localTempSwap"/>
+    </cache>
+</ehcache>
