@@ -33,6 +33,8 @@ public class TokenGeneratorImpl implements TokenGenerator {
 
     private static final String ALGORYTHM = "AES";
 
+    private static final String SECURITY_PROVIDER = "BC";
+
 
     Key key;
 
@@ -42,60 +44,69 @@ public class TokenGeneratorImpl implements TokenGenerator {
     }
 
     @PostConstruct
-    public void init() throws Exception{
+    public void init() throws Exception {
         Security.addProvider(new BouncyCastleProvider());
         key = generateKey();
     }
 
 
     public String generateToken(String[] data, Date expirationDate) {
-        String mergedData = StringUtils.arrayToDelimitedString(data,DATA_DELIMETER);
-        if(expirationDate!=null) {
+        String mergedData = StringUtils.arrayToDelimitedString(data, DATA_DELIMETER);
+        if (expirationDate != null) {
             mergedData = expirationDate.getTime() + DATA_DELIMETER + mergedData;
         } else {
-            mergedData = EXPIRES_NEVER_STRING +DATA_DELIMETER +  mergedData;
+            mergedData = EXPIRES_NEVER_STRING + DATA_DELIMETER + mergedData;
         }
 
         try {
-            Cipher cipher =  Cipher.getInstance(ALGORYTHM, "BC");
+            Cipher cipher = Cipher.getInstance(ALGORYTHM, SECURITY_PROVIDER);
             cipher.init(Cipher.ENCRYPT_MODE, key);
             byte[] encVal = cipher.doFinal(mergedData.getBytes());
             String encryptedValue = new BASE64Encoder().encode(encVal);
             return encryptedValue;
-        } catch (Exception e) {
-          e.printStackTrace();
-        }
-        return null;
-    }
-
-    public Boolean validateToken(String token, String ... expectedData) {
-
-        try {
-            boolean isValid = false;
-            Cipher cipher = Cipher.getInstance(ALGORYTHM, "BC");
-            cipher.init(Cipher.DECRYPT_MODE, key);
-            byte[] decodedValue = new BASE64Decoder().decodeBuffer(token);
-            byte[] decValue = cipher.doFinal(decodedValue);
-            String decryptedValue = new String(decValue);
-            System.out.print(decryptedValue);
-
-            String[] data=decryptedValue.split(DATA_DELIMETER);
-            isValid = Objects.deepEquals(expectedData,Arrays.copyOfRange(data,1, data.length));
-
-            if(!data[0].equals(EXPIRES_NEVER_STRING)) {
-                Date expires = new Date(Long.valueOf(data[0]));
-                if(expires.compareTo(new Date())<0) {
-                    isValid = false;
-                }
-            }
-            return isValid;
         } catch (Exception e) {
             e.printStackTrace();
         }
         return null;
     }
 
+    private String[] decryptedValue(String token) {
+        byte[] decValue = {};
+        try {
+            Cipher cipher = Cipher.getInstance(ALGORYTHM, SECURITY_PROVIDER);
+            cipher.init(Cipher.DECRYPT_MODE, key);
+            byte[] decodedValue = new BASE64Decoder().decodeBuffer(token);
+            decValue = cipher.doFinal(decodedValue);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return (new String(decValue)).split(DATA_DELIMETER);
+    }
+
+    public Boolean validateToken(String token, String... expectedData) {
+        String[] data = decryptedValue(token);
+        boolean isValid = Objects.deepEquals(expectedData, Arrays.copyOfRange(data, 1, data.length));
+        return isValid && isNotExpired(data[0]);
+
+    }
+
+    private boolean isNotExpired(String s) {
+        if (!s.equals(EXPIRES_NEVER_STRING)) {
+            Date expires = new Date(Long.valueOf(s));
+            return !(expires.compareTo(new Date()) < 0);
+        }
+        return true;
+    }
+
     public String generateToken(String[] data) {
         return generateToken(data, null);
+    }
+
+    public String extractData(String token) {
+        String[] data = decryptedValue(token);
+        if(isNotExpired(data[0])) {
+           return StringUtils.arrayToDelimitedString(Arrays.copyOfRange(data, 1, data.length), DATA_DELIMETER);
+        }
+        return null;
     }
 }

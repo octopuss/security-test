@@ -57,7 +57,17 @@ public class TokenGeneratorTest {
         Assert.assertFalse(tokenGenerator.validateToken(token, data));
     }
 
+    @Test
+    public void extractDataTest()  {
+        String token = tokenGenerator.generateToken(data);
+        Assert.assertEquals(data[0],tokenGenerator.extractData(token));
+    }
 
-
-
+    @Test
+    public void extractDataExpiredTokenTest()  {
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.MILLISECOND,-temporaryTokenValidity);
+        String token = tokenGenerator.generateToken(data,calendar.getTime());
+        Assert.assertNull(tokenGenerator.extractData(token));
+    }
 }

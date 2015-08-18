@@ -12,4 +12,6 @@ public interface TokenGenerator {
     String generateToken(String[] data);
 
     Boolean validateToken(String token, String ... expectedData);
+
+    String extractData(String token);
 }
