@@ -52,18 +52,12 @@ public class TokenGeneratorImpl implements TokenGenerator {
 
     public String generateToken(String[] data, Date expirationDate) {
         String mergedData = StringUtils.arrayToDelimitedString(data, DATA_DELIMETER);
-        if (expirationDate != null) {
-            mergedData = expirationDate.getTime() + DATA_DELIMETER + mergedData;
-        } else {
-            mergedData = EXPIRES_NEVER_STRING + DATA_DELIMETER + mergedData;
-        }
-
+        mergedData = (expirationDate!= null ? expirationDate.getTime() : EXPIRES_NEVER_STRING) + DATA_DELIMETER + mergedData;
         try {
             Cipher cipher = Cipher.getInstance(ALGORYTHM, SECURITY_PROVIDER);
             cipher.init(Cipher.ENCRYPT_MODE, key);
             byte[] encVal = cipher.doFinal(mergedData.getBytes());
-            String encryptedValue = new BASE64Encoder().encode(encVal);
-            return encryptedValue;
+            return new BASE64Encoder().encode(encVal);
         } catch (Exception e) {
             e.printStackTrace();
         }
